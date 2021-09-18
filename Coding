@@ -1,0 +1,62 @@
+#include <SoftwareSerial.h>
+#include <TinyGPS++.h>
+static const int RXPin = 4, TXPin = 3;
+static const uint32_t GPSBaud = 9600;
+TinyGPSPlus gps;
+SoftwareSerial GPS(RXPin, TXPin);
+SoftwareSerial SIM900(7, 8);
+String textForSMS;
+int BUTTONstate = 0;
+int BUTTON = 2;
+const int buzzerPin=5;
+
+String f1001 = "+917989833691";
+//String f1002 = "+919959065015";
+//String f1003 = "+917981941239";
+
+void setup() {
+  pinMode(BUTTON, INPUT);
+  pinMode(buzzerPin, OUTPUT);
+  Serial.begin(9600);
+      SIM900.begin(9600);
+      GPS.begin(GPSBaud);
+  Serial.println(" logging time completed!");
+  delay(5000);    
+
+}
+
+void loop() {
+  BUTTONstate = digitalRead(BUTTON);
+       if (BUTTONstate == HIGH)
+     {
+      if (GPS.available() > 0)
+      {
+      gps.encode(GPS.read());
+      if (gps.location.isUpdated())
+      {
+      Serial.println("Latitude= ");
+      Serial.println(gps.location.lat(), 6);
+      Serial.println(" Longitude= ");
+      Serial.println(gps.location.lng(), 6);    
+     {
+     String mnumber = "AT + CMGS = \""+f1001+"\"";
+        SIM900.print("AT+CMGF=1\r");
+       delay(1000);
+      SIM900.println(mnumber);
+
+       delay(1000);
+       SIM900.println("EMERGENCY NEED HELP");
+       delay(1000);
+       SIM900.println("https://maps.google.com/maps/place/" +String(gps.location.lat(), 6)+"," +String(gps.location.lng(), 6));
+       delay(1000);
+       SIM900.println((char)26);
+       delay(100);
+       SIM900.println();
+       delay(100);
+       digitalWrite(5,HIGH);
+       //
+      }
+     }
+     }
+    }
+}
